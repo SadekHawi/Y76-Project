@@ -12,7 +12,7 @@ const options: swaggerJSDoc.Options = {
     },
     servers: [
       {
-        url: "http://localhost:3000/api",
+        url: process.env.SWAGGER_HOST || "http://localhost:3000/api",
       },
     ],
   },

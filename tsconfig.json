@@ -8,7 +8,10 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "paths": {
+      "@config": ["./src/config"]
+    }
   },
   "include": ["src/**/*", "jest.config.js", "tests/**/*"],
   "exclude": ["node_modules"]

@@ -3,6 +3,12 @@ import exampleRoutes from "./routes/exampleRoutes";
 import taskRoutes from "./routes/task.route";
 import setupSwagger from "./swagger";
 
+import dotenv from "dotenv";
+
+// Load environment variables from the appropriate .env file
+const env = process.env.NODE_ENV || "development";
+dotenv.config({ path: `.env.${env}` });
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
