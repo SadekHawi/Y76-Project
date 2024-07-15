@@ -6,8 +6,10 @@
   "scripts": {
     "start:dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only src/server.ts",
     "start:prod": "cross-env NODE_ENV=production ts-node  src/server.ts",
-    "migrate": "npx knex migrate:latest --knexfile src/db/.knexfile.ts",
-    "seed": "npx knex seed:run --knexfile src/db/.knexfile.ts",
+    "migrate:dev": "npx knex migrate:latest --knexfile src/db/.knexfile.ts --env development",
+    "seed:dev": "npx knex seed:run --knexfile src/db/.knexfile.ts --env development",
+    "migrate:prod": "npx knex migrate:latest --knexfile src/db/.knexfile.ts --env production",
+    "seed:prod": "npx knex seed:run --knexfile src/db/.knexfile.ts --env production",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:debug": "node --inspect-brk --no-lazy node_modules/.bin/jest --runInBand --no-cache --detectOpenHandles",
