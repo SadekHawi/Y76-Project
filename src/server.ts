@@ -26,5 +26,5 @@ setupSwagger(app);
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running in ${env} mode on port ${PORT}`);
-  console.log(`Swagger host: ${process.env.SWAGGER_HOST}`);
+  console.log(`Swagger host: ${process.env.SWAGGER_HOST}-docs/`);
 });
