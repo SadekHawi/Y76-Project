@@ -460,3 +460,79 @@ prompt :i want to document the the APIs including endpoint description and usage
 in API-Documentation.md file
 
 ////////////////////////////////////////////////////////////////////////////////////
+
+Deployment using render.
+
+prompt : I want to deploy my Node.js TypeScript project on Render. Can you guide me through the process?
+
+Web Service Configuration on Render:
+
+Create a new Web Service:
+
+Connect your GitHub repository
+Choose the branch to deploy
+
+Configure the build settings:
+
+Build Command: npm install && npm run build
+Start Command: npm run prod
+
+Set environment variables:
+
+NODE_ENV: production
+API_URL: https://your-app-name.onrender.com/api
+DATABASE_URL: [Your PostgreSQL connection string]
+[Any other environment variables from your .env.production file]
+
+Choose the free plan (or appropriate plan for your needs)
+Click "Create Web Service"
+
+Database Configuration on Render:
+
+Create a new PostgreSQL database:
+
+Click "New +" and select "PostgreSQL"
+
+Configure the database:
+
+Give it a name
+Choose the free plan (or appropriate plan for your needs)
+
+After creation, note the following details:
+
+Database URL
+Internal Database URL
+
+Use the external Database URL in your web service's DATABASE_URL environment variable
+
+Additional steps:
+
+Ensure your package.json has the correct scripts:
+jsonCopy"scripts": {
+"start": "node dist/server.js",
+"build": "tsc",
+"dev": "NODE_ENV=development ts-node src/server.ts",
+"prod": "NODE_ENV=production node dist/server.js"
+}
+
+Update your Swagger configuration to use environment variables:
+typescriptCopyservers: [
+{
+url: process.env.API_URL,
+description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
+},
+],
+
+Set up your .env.production file (to be included in your GitHub repository):
+CopyNODE_ENV=production
+PORT=3000
+API_URL=https://your-app-name.onrender.com/api
+
+Ensure your application uses the DATABASE_URL environment variable for database connection
+After deployment, access your Swagger documentation at:
+https://your-app-name.onrender.com/api-docs
+
+Remember to replace 'your-app-name' with your actual Render app name in the URLs and environment variables.
+This configuration allows your application to run both locally (using .env.development) and in production on Render, with the correct database connection and API URL in each environment.
+
+//////////////////////////////////////////////////////////////////////////////

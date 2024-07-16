@@ -1,13 +1,13 @@
-services:
-  - type: web
-    name: Y76-project
-    runtime: node
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: Y76-project
-          property: postgresql://y76_project_user:KRjYFomwmQckfO0bg8HzUQaDNEX5u194@dpg-cqao583qf0us7381e7lg-a.oregon-postgres.render.com/y76_project
+# services:
+#   - type: web
+#     name: Y76-project
+#     runtime: node
+#     buildCommand: npm install && npm run build
+#     startCommand: npm start
+#     envVars:
+#       - key: NODE_ENV
+#         value: production
+#       - key: DATABASE_URL
+#         fromDatabase:
+#           name: Y76-project
+#           property: postgresql://y76_project_user:KRjYFomwmQckfO0bg8HzUQaDNEX5u194@dpg-cqao583qf0us7381e7lg-a.oregon-postgres.render.com/y76_project
