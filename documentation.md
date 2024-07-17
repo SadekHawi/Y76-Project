@@ -2,6 +2,8 @@
 
 ## Task Overview
 
+1. APIS
+
 - **Objective:** Create a simple REST API service that manages a to-do list, utilizing LLMs throughout the development process.
 - **Technology Stack:** Node.js, TypeScript, PostgreSQL, Knex.js
 - **Endpoints:**
@@ -357,9 +359,10 @@ const router = Router();
 
 export default router;
 ///////////////////////////////////////////////////////////////////////////////////////////////
-Setting Up Jest for Unit Testing
-Prompt:
 
+2. Jest for Unit Testing
+
+Prompt:
 I want to set up Jest for unit testing my TypeScript project. Please provide a step-by-step guide for configuring Jest, including the necessary package installations, `tsconfig.json` settings, Jest configuration, and an example unit test file.
 Response:
 
@@ -455,11 +458,15 @@ npm test
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ```
 
+3. documentation
+
 prompt :i want to document the the APIs including endpoint description and usage examples
 
 in API-Documentation.md file
 
 ////////////////////////////////////////////////////////////////////////////////////
+
+4. deployment
 
 Deployment using render.
 
@@ -535,11 +542,10 @@ https://your-app-name.onrender.com/api-docs
 Remember to replace 'your-app-name' with your actual Render app name in the URLs and environment variables.
 This configuration allows your application to run both locally (using .env.development) and in production on Render, with the correct database connection and API URL in each environment.
 
-//////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
 
-prompt : what is monitoring and how we can implement it in my project
+5. monitoring
+   prompt : what is monitoring and how we can implement it in my project
 
 Monitoring is the practice of continuously observing your application's performance, availability, and other metrics to ensure it is functioning as expected and to quickly detect and resolve issues. Implementing monitoring in your project involves using tools and services to track various aspects of your application's health, performance, and usage. Here’s how you can implement monitoring for your project:
 
@@ -735,7 +741,7 @@ By using express-status-monitor, you get an easy-to-use monitoring solution with
 
 ////////////////////////////////////////////////////////////////////////////
 
-7. Feature
+6. Feature
 
 prompt : i want to add category for the task, so i want to add a new table (categories) and id, machine_name and display_name as attributes. so we have to update the task table to have a new attribute category_id. plus we have to seed the categories table with data. Plus, please provide me all the changes on dtos, daos and routes
 
