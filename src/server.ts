@@ -1,4 +1,9 @@
-import express from "express";
+import express, {
+  ErrorRequestHandler,
+  Request,
+  Response,
+  NextFunction,
+} from "express";
 import exampleRoutes from "./routes/exampleRoutes";
 import taskRoutes from "./routes/task.route";
 import setupSwagger from "./swagger";
@@ -26,6 +31,45 @@ app.use("/api", taskRoutes);
 
 // Setup Swagger
 setupSwagger(app);
+
+// Simple alert system
+let requestCount = 0;
+let errorCount = 0;
+
+// Middleware to count requests
+app.use((req, res, next) => {
+  requestCount++;
+  next();
+});
+
+// Middleware to count errors
+app.use(
+  (
+    err: ErrorRequestHandler,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    errorCount++;
+    next(err);
+  }
+);
+
+// Set an interval to check request and error counts every minute
+setInterval(() => {
+  if (requestCount > 100) {
+    console.log(
+      `High request rate alert: ${requestCount} requests in the last minute.`
+    );
+  }
+  if (errorCount > 10) {
+    console.log(
+      `High error rate alert: ${errorCount} errors in the last minute.`
+    );
+  }
+  requestCount = 0;
+  errorCount = 0;
+}, 60000);
 
 // Start the server
 app.listen(PORT, () => {
