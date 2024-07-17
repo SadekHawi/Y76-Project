@@ -19,6 +19,9 @@
  *         completed:
  *           type: boolean
  *           description: The status of the task
+ *         category_id:
+ *           type: integer
+ *           description: The id of the category
  *         created_at:
  *           type: string
  *           format: date-time
@@ -32,6 +35,7 @@
  *         title: "Buy groceries"
  *         description: "Milk, Bread, Fruits"
  *         completed: false
+ *         category_id: 2
  *         created_at: "2024-07-14T12:00:00Z"
  *         updated_at: "2024-07-14T12:00:00Z"
  */
@@ -41,6 +45,7 @@ export type Task = {
   title: string;
   description?: string | null;
   completed: boolean;
+  category_id?: number; // Optional category_id
   created_at?: Date;
   updated_at?: Date;
 };
@@ -58,6 +63,8 @@ export type Task = {
  *           type: string
  *         completed:
  *           type: boolean
+ *         category_id:
+ *           type: integer
  *       required:
  *         - title
  */
@@ -66,6 +73,7 @@ export type CreateTaskDTO = {
   title: string;
   description?: string;
   completed?: boolean;
+  category_id?: number; // Optional category_id
 };
 
 /**
@@ -81,12 +89,13 @@ export type CreateTaskDTO = {
  *           type: string
  *         completed:
  *           type: boolean
- *       required:
- *         - title
+ *         category_id:
+ *           type: integer
  */
 
 export type UpdateTaskDTO = {
   title?: string;
   description?: string;
   completed?: boolean;
+  category_id?: number; // Optional category_id
 };

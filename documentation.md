@@ -734,3 +734,825 @@ Basic Metrics: Tracks key metrics like response times, request rate, and error r
 By using express-status-monitor, you get an easy-to-use monitoring solution with a graphical interface, helping you keep track of your application's health without the complexity of setting up and managing Prometheus.
 
 ////////////////////////////////////////////////////////////////////////////
+
+7. Feature
+
+prompt : i want to add category for the task, so i want to add a new table (categories) and id, machine_name and display_name as attributes. so we have to update the task table to have a new attribute category_id. plus we have to seed the categories table with data. Plus, please provide me all the changes on dtos, daos and routes
+
+Let's update your code with the requested changes, including the DAOs using functions, DTOs as types, and the Swagger documentation for the new types and routes.
+
+1. Database Migration
+   Create Migration for Categories Table
+   Create a new migration file to add the categories table and update the tasks table with category_id.
+
+sh
+Copy code
+npx knex migrate:make add_categories_table
+In the generated migration file, add the following code:
+
+typescript
+Copy code
+import { Knex } from "knex";
+
+export async function up(knex: Knex): Promise<void> {
+await knex.schema.createTable("categories", (table) => {
+table.increments("id").primary();
+table.string("machine_name").notNullable().unique();
+table.string("display_name").notNullable();
+});
+
+await knex.schema.table("tasks", (table) => {
+table.integer("category_id").unsigned().references("id").inTable("categories");
+});
+}
+
+export async function down(knex: Knex): Promise<void> {
+await knex.schema.table("tasks", (table) => {
+table.dropColumn("category_id");
+});
+
+await knex.schema.dropTable("categories");
+} 2. Seed the Categories Table
+Create a new seed file to insert initial data into the categories table.
+
+sh
+Copy code
+npx knex seed:make seed_categories
+In the generated seed file, add the following code:
+
+typescript
+Copy code
+import { Knex } from "knex";
+
+export async function seed(knex: Knex): Promise<void> {
+// Deletes ALL existing entries
+await knex("categories").del();
+
+// Inserts seed entries
+await knex("categories").insert([
+{ machine_name: "work", display_name: "Work" },
+{ machine_name: "personal", display_name: "Personal" },
+{ machine_name: "shopping", display_name: "Shopping" },
+]);
+} 3. Update DTOs
+category.dto.ts
+Create a new file category.dto.ts for category DTOs.
+
+typescript
+Copy code
+/\*\*
+
+- @swagger
+- components:
+- schemas:
+-     Category:
+-       type: object
+-       required:
+-         - machine_name
+-         - display_name
+-       properties:
+-         id:
+-           type: integer
+-           description: The auto-generated id of the category
+-         machine_name:
+-           type: string
+-           description: The machine name of the category
+-         display_name:
+-           type: string
+-           description: The display name of the category
+-       example:
+-         id: 1
+-         machine_name: "work"
+-         display_name: "Work"
+  \*/
+
+export type Category = {
+id: number;
+machine_name: string;
+display_name: string;
+};
+
+/\*\*
+
+- @swagger
+- components:
+- schemas:
+-     CreateCategoryDTO:
+-       type: object
+-       properties:
+-         machine_name:
+-           type: string
+-         display_name:
+-           type: string
+-       required:
+-         - machine_name
+-         - display_name
+  \*/
+
+export type CreateCategoryDTO = {
+machine_name: string;
+display_name: string;
+};
+Update task.dto.ts
+Update the task DTO to include category_id.
+
+typescript
+Copy code
+/\*\*
+
+- @swagger
+- components:
+- schemas:
+-     Task:
+-       type: object
+-       required:
+-         - title
+-       properties:
+-         id:
+-           type: integer
+-           description: The auto-generated id of the task
+-         title:
+-           type: string
+-           description: The title of the task
+-         description:
+-           type: string
+-           description: The description of the task
+-         completed:
+-           type: boolean
+-           description: The status of the task
+-         category_id:
+-           type: integer
+-           description: The id of the category
+-         created_at:
+-           type: string
+-           format: date-time
+-           description: The date the task was created
+-         updated_at:
+-           type: string
+-           format: date-time
+-           description: The date the task was last updated
+-       example:
+-         id: 1
+-         title: "Buy groceries"
+-         description: "Milk, Bread, Fruits"
+-         completed: false
+-         category_id: 2
+-         created_at: "2024-07-14T12:00:00Z"
+-         updated_at: "2024-07-14T12:00:00Z"
+  \*/
+
+export type Task = {
+id: number;
+title: string;
+description?: string | null;
+completed: boolean;
+category_id?: number; // Optional category_id
+created_at?: Date;
+updated_at?: Date;
+};
+
+/\*\*
+
+- @swagger
+- components:
+- schemas:
+-     CreateTaskDTO:
+-       type: object
+-       properties:
+-         title:
+-           type: string
+-         description:
+-           type: string
+-         completed:
+-           type: boolean
+-         category_id:
+-           type: integer
+-       required:
+-         - title
+  \*/
+
+export type CreateTaskDTO = {
+title: string;
+description?: string;
+completed?: boolean;
+category_id?: number; // Optional category_id
+};
+
+/\*\*
+
+- @swagger
+- components:
+- schemas:
+-     UpdateTaskDTO:
+-       type: object
+-       properties:
+-         title:
+-           type: string
+-         description:
+-           type: string
+-         completed:
+-           type: boolean
+-         category_id:
+-           type: integer
+  \*/
+
+export type UpdateTaskDTO = {
+title?: string;
+description?: string;
+completed?: boolean;
+category_id?: number; // Optional category_id
+}; 4. Update DAOs
+category.dao.ts
+Create a new file category.dao.ts for category DAO.
+
+typescript
+Copy code
+import db from "../db/db";
+import { Category, CreateCategoryDTO } from "../dto/category.dto";
+
+async function createCategory(category: CreateCategoryDTO): Promise<Category> {
+const [newCategory] = await db("categories").insert(category).returning("\*");
+if (!newCategory) {
+throw new Error("Failed to create category");
+}
+return newCategory;
+}
+
+async function getAllCategories(): Promise<Category[]> {
+return db("categories").select("\*");
+}
+
+async function getCategoryById(id: number): Promise<Category | null> {
+const category = await db("categories").where({ id }).first();
+return category || null;
+}
+
+async function updateCategory(id: number, category: Partial<CreateCategoryDTO>): Promise<Category> {
+const [updatedCategory] = await db("categories")
+.where({ id })
+.update(category)
+.returning("\*");
+if (!updatedCategory) {
+throw new Error("Failed to update category");
+}
+return updatedCategory;
+}
+
+async function deleteCategory(id: number): Promise<number> {
+const deletedRows = await db("categories").where({ id }).delete();
+if (deletedRows === 0) {
+throw new Error("Failed to delete category");
+}
+return 1;
+}
+
+export default {
+createCategory,
+getAllCategories,
+getCategoryById,
+updateCategory,
+deleteCategory,
+};
+Update task.dao.ts
+Update the task DAO to handle category_id.
+
+typescript
+Copy code
+import { CreateTaskDTO, Task, UpdateTaskDTO } from "../dto/task.dto";
+import db from "../db/db";
+
+async function getAllTasks(): Promise<Task[]> {
+const tasks = await db("tasks").select("\*");
+if (!tasks) {
+throw new Error("No tasks found");
+}
+return tasks;
+}
+
+async function createTask(task: CreateTaskDTO): Promise<Task> {
+const [newTask] = await db("tasks").insert(task).returning("\*");
+
+if (!newTask) {
+throw new Error("Failed to create task");
+}
+return newTask;
+}
+
+async function updateTask(id: number, task: UpdateTaskDTO): Promise<Task> {
+const [updatedTask] = await db("tasks")
+.where({ id })
+.update(task)
+.returning("\*");
+if (!updatedTask) {
+throw new Error("Failed to update task");
+}
+return updatedTask;
+}
+
+async function deleteTask(id: number): Promise<number> {
+const deletedRows = await db("tasks").where({ id }).delete();
+if (deletedRows === 0) {
+throw new Error("Failed to delete task");
+}
+return 1;
+}
+
+async function getTaskById(id: number): Promise<Task> {
+const task = await db("tasks").where({ id }).first();
+
+if (!task) {
+throw new Error("Failed to get task");
+}
+return task;
+}
+
+export default {
+getAllTasks,
+createTask,
+updateTask,
+deleteTask,
+getTaskById,
+}; 5. Update Services
+category.service.ts
+Create a new file category.service.ts for category service.
+
+typescript
+Copy code
+import categoryDao from "../dao/category.dao";
+import { Category, CreateCategoryDTO } from "../dto/category.dto";
+
+async function createCategory(category: CreateCategoryDTO): Promise<Category> {
+return categoryDao.createCategory(category);
+}
+
+async function getAllCategories(): Promise<Category[]> {
+return categoryDao.getAllCategories();
+}
+
+async function getCategoryById(id: number): Promise<Category | null> {
+return categoryDao.getCategoryById(id);
+}
+
+async function updateCategory(id: number, category: Partial<CreateCategoryDTO>): Promise<Category> {
+return categoryDao.updateCategory(id, category);
+}
+
+async function deleteCategory(id: number): Promise<number> {
+return categoryDao.deleteCategory(id);
+}
+
+export default {
+createCategory,
+getAllCategories,
+getCategoryById,
+updateCategory,
+deleteCategory,
+};
+Update task.service.ts
+Update the task service to handle category_id.
+
+typescript
+Copy code
+import taskDao from "../dao/task.dao";
+import { CreateTaskDTO, Task, UpdateTaskDTO } from "../dto/task.dto";
+
+async function getAllTasks(): Promise<Task[]> {
+return taskDao.getAllTasks();
+}
+
+async function createTask(task: CreateTaskDTO): Promise<Task> {
+return taskDao.createTask(task);
+}
+
+async function updateTask(id: number, task: UpdateTaskDTO): Promise<Task> {
+return taskDao.updateTask(id, task);
+}
+
+async function deleteTask(id: number): Promise<number> {
+return taskDao.deleteTask(id);
+}
+
+async function getTaskById(id: number): Promise<Task> {
+return taskDao.getTaskById(id);
+}
+
+export default {
+getAllTasks,
+createTask,
+updateTask,
+deleteTask,
+getTaskById,
+}; 6. Update Routes
+category.route.ts
+Create a new file category.route.ts for category routes.
+
+typescript
+Copy code
+import { Router } from "express";
+import categoryService from "../services/category.service";
+import { CreateCategoryDTO } from "../dto/category.dto";
+
+const router = Router();
+
+/\*\*
+
+- @swagger
+- tags:
+- name: Categories
+- description: Category management
+  \*/
+
+/\*\*
+
+- @swagger
+- /categories:
+- get:
+-     summary: Get all categories
+-     tags: [Categories]
+-     responses:
+-       200:
+-         description: The list of categories
+-         content:
+-           application/json:
+-             schema:
+-               type: array
+-               items:
+-                 $ref: '#/components/schemas/Category'
+  \*/
+  router.get("/categories", async (req, res) => {
+  try {
+  const categories = await categoryService.getAllCategories();
+  res.status(200).json(categories);
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /categories:
+- post:
+-     summary: Create a new category
+-     tags: [Categories]
+-     requestBody:
+-       required: true
+-       content:
+-         application/json:
+-           schema:
+-             $ref: '#/components/schemas/CreateCategoryDTO'
+-     responses:
+-       201:
+-         description: The created category
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Category'
+  \*/
+  router.post("/categories", async (req, res) => {
+  try {
+  const category: CreateCategoryDTO = req.body;
+  const newCategory = await categoryService.createCategory(category);
+  res.status(201).json(newCategory);
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /categories/{id}:
+- get:
+-     summary: Get category by id
+-     tags: [Categories]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The category id
+-     responses:
+-       200:
+-         description: The category description by id
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Category'
+-       404:
+-         description: Category not found
+  \*/
+  router.get("/categories/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const category = await categoryService.getCategoryById(id);
+  if (category) {
+  res.status(200).json(category);
+  } else {
+  res.status(404).json({ error: "Category not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /categories/{id}:
+- put:
+-     summary: Update category by id
+-     tags: [Categories]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The category id
+-     requestBody:
+-       required: true
+-       content:
+-         application/json:
+-           schema:
+-             $ref: '#/components/schemas/CreateCategoryDTO'
+-     responses:
+-       200:
+-         description: The updated category
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Category'
+-       404:
+-         description: Category not found
+  \*/
+  router.put("/categories/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const category: Partial<CreateCategoryDTO> = req.body;
+  const updatedCategory = await categoryService.updateCategory(id, category);
+  if (updatedCategory) {
+  res.status(200).json(updatedCategory);
+  } else {
+  res.status(404).json({ error: "Category not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /categories/{id}:
+- delete:
+-     summary: Delete category by id
+-     tags: [Categories]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The category id
+-     responses:
+-       200:
+-         description: Category deleted
+-       404:
+-         description: Category not found
+  \*/
+  router.delete("/categories/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const result = await categoryService.deleteCategory(id);
+  if (result) {
+  res.status(200).json({ message: "Category deleted" });
+  } else {
+  res.status(404).json({ error: "Category not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+export default router;
+Update task.route.ts
+Update the task routes to include category_id.
+
+typescript
+Copy code
+import { Router } from "express";
+import taskService from "../services/task.service";
+import { CreateTaskDTO, UpdateTaskDTO } from "../dto/task.dto";
+
+const router = Router();
+
+/\*\*
+
+- @swagger
+- tags:
+- name: Tasks
+- description: Task management
+  \*/
+
+/\*\*
+
+- @swagger
+- /tasks:
+- get:
+-     summary: Get all tasks
+-     tags: [Tasks]
+-     responses:
+-       200:
+-         description: The list of tasks
+-         content:
+-           application/json:
+-             schema:
+-               type: array
+-               items:
+-                 $ref: '#/components/schemas/Task'
+  \*/
+  router.get("/tasks", async (req, res) => {
+  try {
+  const tasks = await taskService.getAllTasks();
+  res.status(200).json(tasks);
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /tasks:
+- post:
+-     summary: Create a new task
+-     tags: [Tasks]
+-     requestBody:
+-       required: true
+-       content:
+-         application/json:
+-           schema:
+-             $ref: '#/components/schemas/CreateTaskDTO'
+-     responses:
+-       201:
+-         description: The created task
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Task'
+  \*/
+  router.post("/tasks", async (req, res) => {
+  try {
+  const task: CreateTaskDTO = req.body;
+  const newTask = await taskService.createTask(task);
+  res.status(201).json(newTask);
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /tasks/{id}:
+- get:
+-     summary: Get task by id
+-     tags: [Tasks]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The task id
+-     responses:
+-       200:
+-         description: The task description by id
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Task'
+-       404:
+-         description: Task not found
+  \*/
+  router.get("/tasks/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const task = await taskService.getTaskById(id);
+  if (task) {
+  res.status(200).json(task);
+  } else {
+  res.status(404).json({ error: "Task not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /tasks/{id}:
+- put:
+-     summary: Update task by id
+-     tags: [Tasks]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The task id
+-     requestBody:
+-       required: true
+-       content:
+-         application/json:
+-           schema:
+-             $ref: '#/components/schemas/UpdateTaskDTO'
+-     responses:
+-       200:
+-         description: The updated task
+-         content:
+-           application/json:
+-             schema:
+-               $ref: '#/components/schemas/Task'
+-       404:
+-         description: Task not found
+  \*/
+  router.put("/tasks/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const task: UpdateTaskDTO = req.body;
+  const updatedTask = await taskService.updateTask(id, task);
+  if (updatedTask) {
+  res.status(200).json(updatedTask);
+  } else {
+  res.status(404).json({ error: "Task not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+/\*\*
+
+- @swagger
+- /tasks/{id}:
+- delete:
+-     summary: Delete task by id
+-     tags: [Tasks]
+-     parameters:
+-       - in: path
+-         name: id
+-         schema:
+-           type: integer
+-         required: true
+-         description: The task id
+-     responses:
+-       200:
+-         description: Task deleted
+-       404:
+-         description: Task not found
+  \*/
+  router.delete("/tasks/:id", async (req, res) => {
+  try {
+  const id = parseInt(req.params.id);
+  const result = await taskService.deleteTask(id);
+  if (result) {
+  res.status(200).json({ message: "Task deleted" });
+  } else {
+  res.status(404).json({ error: "Task not found" });
+  }
+  } catch (err) {
+  res.status(500).json({ error: err.message });
+  }
+  });
+
+export default router; 7. Register Routes
+Ensure that you register the new category routes in your main server file.
+
+typescript
+Copy code
+import express from "express";
+import taskRoutes from "./routes/task.route";
+import categoryRoutes from "./routes/category.route";
+
+const app = express();
+
+app.use(express.json());
+app.use("/api", taskRoutes);
+app.use("/api", categoryRoutes);
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+console.log(`Server is running on port ${port}`);
+}); 8. Run Migrations and Seeds
+Finally, run the migrations and seeds to apply the changes to your database.
+
+sh
+Copy code
+npx knex migrate:latest
+npx knex seed:run
+This setup adds the category feature, including the necessary DTOs, DAOs, services, routes, and Swagger documentation.

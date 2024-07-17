@@ -1,20 +1,25 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import taskService from "../services/task.service";
-import { CreateTaskDTO, Task, UpdateTaskDTO } from "../dto/task.dto";
+import { CreateTaskDTO, UpdateTaskDTO } from "../dto/task.dto";
 
 const router = Router();
 
-// GET all tasks
+/**
+ * @swagger
+ * tags:
+ *   name: Tasks
+ *   description: Task management
+ */
 
 /**
  * @swagger
  * /tasks:
  *   get:
- *     summary: Retrieve a list of tasks
+ *     summary: Get all tasks
  *     tags: [Tasks]
  *     responses:
  *       200:
- *         description: A list of tasks
+ *         description: The list of tasks
  *         content:
  *           application/json:
  *             schema:
@@ -22,19 +27,18 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Task'
  */
-
-router.get("/tasks", async (req: Request, res: Response) => {
+router.get("/tasks", async (req, res) => {
   try {
     const tasks = await taskService.getAllTasks();
-    res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch tasks" });
+    res.status(200).json(tasks);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * @swagger
- * /task:
+ * /tasks:
  *   post:
  *     summary: Create a new task
  *     tags: [Tasks]
@@ -46,37 +50,72 @@ router.get("/tasks", async (req: Request, res: Response) => {
  *             $ref: '#/components/schemas/CreateTaskDTO'
  *     responses:
  *       201:
- *         description: Task created successfully
+ *         description: The created task
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Task'
- *       400:
- *         description: Invalid input
  */
-router.post("/task", async (req: Request, res: Response) => {
+router.post("/tasks", async (req, res) => {
   try {
-    const createTaskDTO: CreateTaskDTO = req.body;
-    const newTask: Task = await taskService.createTask(createTaskDTO);
+    const task: CreateTaskDTO = req.body;
+    const newTask = await taskService.createTask(task);
     res.status(201).json(newTask);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * @swagger
- * /task/{id}:
- *   put:
- *     summary: Update an existing task
+ * /tasks/{id}:
+ *   get:
+ *     summary: Get task by id
  *     tags: [Tasks]
  *     parameters:
  *       - in: path
  *         name: id
- *         required: true
  *         schema:
  *           type: integer
- *         description: Task ID
+ *         required: true
+ *         description: The task id
+ *     responses:
+ *       200:
+ *         description: The task description by id
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       404:
+ *         description: Task not found
+ */
+router.get("/tasks/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const task = await taskService.getTaskById(id);
+    if (task) {
+      res.status(200).json(task);
+    } else {
+      res.status(404).json({ error: "Task not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   put:
+ *     summary: Update task by id
+ *     tags: [Tasks]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The task id
  *     requestBody:
  *       required: true
  *       content:
@@ -85,55 +124,59 @@ router.post("/task", async (req: Request, res: Response) => {
  *             $ref: '#/components/schemas/UpdateTaskDTO'
  *     responses:
  *       200:
- *         description: Task updated successfully
+ *         description: The updated task
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Task'
- *       400:
- *         description: Invalid input
  *       404:
  *         description: Task not found
  */
-router.put("/task/:id", async (req: Request, res: Response) => {
+router.put("/tasks/:id", async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const updateTaskDTO: UpdateTaskDTO = req.body;
-    const updatedTask: Task = await taskService.updateTask(id, updateTaskDTO);
-    res.status(200).json(updatedTask);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    const id = parseInt(req.params.id);
+    const task: UpdateTaskDTO = req.body;
+    const updatedTask = await taskService.updateTask(id, task);
+    if (updatedTask) {
+      res.status(200).json(updatedTask);
+    } else {
+      res.status(404).json({ error: "Task not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * @swagger
- * /task/{id}:
+ * /tasks/{id}:
  *   delete:
- *     summary: Delete a task
+ *     summary: Delete task by id
  *     tags: [Tasks]
  *     parameters:
  *       - in: path
  *         name: id
- *         required: true
  *         schema:
  *           type: integer
- *         description: Task ID
+ *         required: true
+ *         description: The task id
  *     responses:
- *       204:
- *         description: Task deleted successfully
- *       400:
- *         description: Invalid input
+ *       200:
+ *         description: Task deleted
  *       404:
  *         description: Task not found
  */
-router.delete("/task/:id", async (req: Request, res: Response) => {
+router.delete("/tasks/:id", async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    await taskService.deleteTask(id);
-    res.sendStatus(204);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    const id = parseInt(req.params.id);
+    const result = await taskService.deleteTask(id);
+    if (result) {
+      res.status(200).json({ message: "Task deleted" });
+    } else {
+      res.status(404).json({ error: "Task not found" });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
