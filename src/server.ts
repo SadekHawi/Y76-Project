@@ -9,6 +9,7 @@ import taskRoutes from "./routes/task.route";
 import setupSwagger from "./swagger";
 import dotenv from "dotenv";
 import statusMonitor from "express-status-monitor";
+import indexRouter from "./routes/index.route";
 
 // Load environment variables from the appropriate .env file
 const env = process.env.NODE_ENV || "development";
@@ -28,6 +29,7 @@ app.use(monitor);
 // Routes
 app.use("/api/example", exampleRoutes);
 app.use("/api", taskRoutes);
+app.use("/", indexRouter);
 
 // Setup Swagger
 setupSwagger(app);
