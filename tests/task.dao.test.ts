@@ -1,6 +1,6 @@
 // Import the DAO and the necessary interfaces or types
 import taskDao from "../src/dao/task.dao";
-import { Task, UpdateTaskDTO } from "../src/dto/task.dto";
+import { Task, UpdateTaskDTO, CreateTaskDTO } from "../src/dto/task.dto";
 
 // Mock the DAO functions
 jest.mock("../src/dao/task.dao", () => ({
@@ -19,17 +19,17 @@ describe("Task DAO", () => {
   });
 
   it("should insert a task into the database", async () => {
-    const newTask = {
+    const newTask: CreateTaskDTO = {
       title: "New Task",
       description: "Description for New Task",
       completed: false,
-      created_at: new Date(),
-      updated_at: new Date(),
     };
 
-    const insertedTask: Task = {
+    const insertedTask = {
       id: 1,
       ...newTask,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
 
     // Mock the createTask function to return the inserted task
